@@ -38,7 +38,15 @@
             margin-bottom: 40px;
             padding: 25px;
             background: #f8f9fa;
-            border-radius: 10px;
+            border-radius: 15px;
+            border: 2px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s, border-color 0.3s;
+        }
+
+        .section:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
         }
 
         .section h2 {
@@ -205,7 +213,7 @@
         <h1>🛒 Purchase Application</h1>
 
         <!-- API Key Section -->
-        <div class="section" style="background: #e3f2fd; border-left: 4px solid #2196f3;">
+        <div class="section" style="background: #e3f2fd; border: 2px solid #2196f3; border-radius: 15px;">
             <h2 style="color: #1976d2;">🔑 API Key Configuration</h2>
             <div class="form-group" style="display: flex; gap: 10px; align-items: flex-end;">
                 <div style="flex: 1;">
@@ -380,17 +388,29 @@
                 const countries = await response.json();
                 const countrySelect = document.getElementById('country');
                 
-                // Sort countries alphabetically by country name
-                countries.sort((a, b) => {
+                // Use a Map to track unique countries (country name -> country data)
+                const uniqueCountriesMap = new Map();
+                
+                // Process countries and keep only unique ones (first occurrence wins)
+                countries.forEach(country => {
+                    if (country.country && !uniqueCountriesMap.has(country.country)) {
+                        uniqueCountriesMap.set(country.country, country);
+                    }
+                });
+                
+                // Convert map values to array and sort alphabetically by country name
+                const uniqueCountries = Array.from(uniqueCountriesMap.values()).sort((a, b) => {
                     if (a.country < b.country) return -1;
                     if (a.country > b.country) return 1;
                     return 0;
                 });
                 
+                // Clear the select dropdown completely before repopulating
                 countrySelect.innerHTML = '<option value="">Select a country</option>';
                 let defaultSelected = false;
                 
-                countries.forEach(country => {
+                // Add unique countries to the dropdown
+                uniqueCountries.forEach(country => {
                     const option = document.createElement('option');
                     option.value = country.country;
                     option.textContent = `${country.country} (${country.currencyCode})`;
@@ -406,6 +426,9 @@
             } catch (error) {
                 console.error('Error loading countries:', error);
                 showMessage('Error loading countries', 'error');
+                // Reset to default state on error
+                const countrySelect = document.getElementById('country');
+                countrySelect.innerHTML = '<option value="">Error loading countries</option>';
             }
         }
 
@@ -427,10 +450,20 @@
                 const countries = await response.json();
                 const currencySelect = document.getElementById('currencySelect');
                 
-                // Extract unique currencies and sort alphabetically
-                const currencies = [...new Set(countries.map(c => c.currencyCode))];
-                currencies.sort();
+                // Use a Map to track unique currencies (currencyCode -> country data)
+                const uniqueCurrenciesMap = new Map();
                 
+                // Process countries and keep only unique currencies (first occurrence wins)
+                countries.forEach(country => {
+                    if (country.currencyCode && !uniqueCurrenciesMap.has(country.currencyCode)) {
+                        uniqueCurrenciesMap.set(country.currencyCode, country);
+                    }
+                });
+                
+                // Extract unique currency codes and sort alphabetically
+                const currencies = Array.from(uniqueCurrenciesMap.keys()).sort();
+                
+                // Clear the select dropdown completely before repopulating
                 currencySelect.innerHTML = '';
                 let defaultSelected = false;
                 
@@ -438,8 +471,8 @@
                     const option = document.createElement('option');
                     option.value = currencyCode;
                     
-                    // Find the country name for display
-                    const country = countries.find(c => c.currencyCode === currencyCode);
+                    // Find the country name for display from our unique map
+                    const country = uniqueCurrenciesMap.get(currencyCode);
                     const displayName = country ? `${country.country} - ${currencyCode}` : currencyCode;
                     option.textContent = displayName;
                     

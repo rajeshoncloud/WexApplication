@@ -53,12 +53,12 @@ public class CurrencyService {
         popularCurrencies.add(createCurrencyDTO("Mexico", "Mexico-Peso"));
         
         // 2. Europe (Eurozone and UK)
-        popularCurrencies.add(createCurrencyDTO("United Kingdom", "UK-Pound"));
-        popularCurrencies.add(createCurrencyDTO("Germany", "Euro"));
-        popularCurrencies.add(createCurrencyDTO("France", "Euro"));
-        popularCurrencies.add(createCurrencyDTO("Italy", "Euro"));
-        popularCurrencies.add(createCurrencyDTO("Spain", "Euro"));
-        popularCurrencies.add(createCurrencyDTO("Netherlands", "Euro"));
+        popularCurrencies.add(createCurrencyDTO("United Kingdom", "United Kingdom-Pound"));
+        popularCurrencies.add(createCurrencyDTO("Germany", "Euro Zone-Euro"));
+        popularCurrencies.add(createCurrencyDTO("France", "Euro Zone-Euro"));
+        popularCurrencies.add(createCurrencyDTO("Italy", "Euro Zone-Euro"));
+        popularCurrencies.add(createCurrencyDTO("Spain", "Euro Zone-Euro"));
+        popularCurrencies.add(createCurrencyDTO("Netherlands", "Euro Zone-Euro"));
         popularCurrencies.add(createCurrencyDTO("Switzerland", "Switzerland-Franc"));
         
         // 3. Asia-Pacific

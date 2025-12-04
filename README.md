@@ -196,22 +196,6 @@ The `api_keys` table includes:
 - `expiration_date` (DATE)
 - `created_at` (TIMESTAMP)
 
-## Currency Conversion
-
-The application supports conversion from USD to the following currencies:
-- EUR (Euro)
-- GBP (British Pound)
-- JPY (Japanese Yen)
-- CAD (Canadian Dollar)
-- AUD (Australian Dollar)
-- CHF (Swiss Franc)
-- CNY (Chinese Yuan)
-- INR (Indian Rupee)
-- MXN (Mexican Peso)
-- BRL (Brazilian Real)
-
-Exchange rates are currently using fallback values. In production, these should be fetched from a real-time currency API.
-
 ## Stopping the Application
 
 To stop all services:
