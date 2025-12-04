@@ -195,7 +195,19 @@
             margin-bottom: 10px;
         }
 
+        /* Remove global invalid styling - we'll handle it specifically */
         input:invalid {
+            border-color: #ddd;
+        }
+
+        /* Red border only for Description and Amount when empty and section is focused */
+        .purchase-section-focused #description:invalid:not(:focus),
+        .purchase-section-focused #description.empty-field {
+            border-color: #dc3545;
+        }
+
+        .purchase-section-focused #amount:invalid:not(:focus),
+        .purchase-section-focused #amount.empty-field {
             border-color: #dc3545;
         }
 
@@ -226,7 +238,7 @@
         </div>
 
         <!-- Add Purchase Section -->
-        <div class="section">
+        <div class="section" id="purchaseSection">
             <h2>Add New Purchase</h2>
             <div id="message"></div>
             <form id="purchaseForm">
@@ -362,7 +374,77 @@
                     counter.className = '';
                     errorMsg.style.display = 'none';
                 }
+                
+                // Update empty field class
+                updateFieldValidation();
             });
+        }
+
+        function setupPurchaseSectionFocus() {
+            const purchaseSection = document.getElementById('purchaseSection');
+            const descriptionInput = document.getElementById('description');
+            const amountInput = document.getElementById('amount');
+            
+            // Add focus class when any element in the section is focused
+            const sectionElements = purchaseSection.querySelectorAll('input, select, button, textarea');
+            sectionElements.forEach(element => {
+                element.addEventListener('focus', function() {
+                    purchaseSection.classList.add('purchase-section-focused');
+                    updateFieldValidation();
+                });
+            });
+            
+            // Remove focus class when clicking outside the section
+            document.addEventListener('click', function(e) {
+                if (!purchaseSection.contains(e.target)) {
+                    purchaseSection.classList.remove('purchase-section-focused');
+                    // Remove empty-field classes when section loses focus
+                    descriptionInput.classList.remove('empty-field');
+                    amountInput.classList.remove('empty-field');
+                }
+            });
+            
+            // Check validation on blur and input for description and amount
+            descriptionInput.addEventListener('blur', function() {
+                updateFieldValidation();
+            });
+            
+            descriptionInput.addEventListener('input', function() {
+                updateFieldValidation();
+            });
+            
+            amountInput.addEventListener('blur', function() {
+                updateFieldValidation();
+            });
+            
+            amountInput.addEventListener('input', function() {
+                updateFieldValidation();
+            });
+        }
+
+        function updateFieldValidation() {
+            const purchaseSection = document.getElementById('purchaseSection');
+            const descriptionInput = document.getElementById('description');
+            const amountInput = document.getElementById('amount');
+            
+            // Only update if section is focused
+            if (!purchaseSection.classList.contains('purchase-section-focused')) {
+                return;
+            }
+            
+            // Check if description is empty
+            if (!descriptionInput.value || descriptionInput.value.trim() === '') {
+                descriptionInput.classList.add('empty-field');
+            } else {
+                descriptionInput.classList.remove('empty-field');
+            }
+            
+            // Check if amount is empty
+            if (!amountInput.value || amountInput.value.trim() === '' || parseFloat(amountInput.value) <= 0) {
+                amountInput.classList.add('empty-field');
+            } else {
+                amountInput.classList.remove('empty-field');
+            }
         }
 
         function setTodayDate() {
@@ -528,7 +610,33 @@
                 // Get currency display name
                 const currencyDisplayName = selectedCurrency.split('-').pop() || selectedCurrency;
 
+                // Extract exchange rate (should be the same for all purchases with valid rates)
+                // Find the first purchase with a valid exchange rate
+                const purchaseWithRate = purchases.find(p => p.exchangeRate != null);
+                const exchangeRate = purchaseWithRate ? parseFloat(purchaseWithRate.exchangeRate).toFixed(4) : null;
+                
+                // Build exchange rate info display
+                let exchangeRateInfo = '';
+                if (exchangeRate) {
+                    exchangeRateInfo = `
+                        <div style="background: #e3f2fd; border: 2px solid #2196f3; border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: center;">
+                            <strong style="color: #1976d2; font-size: 1.1em;">Exchange Rate:</strong>
+                            <span style="color: #1976d2; font-size: 1.2em; font-weight: bold; margin-left: 10px;">
+                                1 USD = ${exchangeRate} ${currencyDisplayName}
+                            </span>
+                        </div>
+                    `;
+                } else {
+                    exchangeRateInfo = `
+                        <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: center;">
+                            <strong style="color: #856404;">Exchange Rate:</strong>
+                            <span style="color: #856404; margin-left: 10px;">N/A - Exchange rate not available for some purchases</span>
+                        </div>
+                    `;
+                }
+
                 let tableHTML = `
+                    ${exchangeRateInfo}
                     <table>
                         <thead>
                             <tr>
