@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Application</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2.5em;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .currency-selector {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .currency-selector select {
+            flex: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .amount {
+            font-weight: 600;
+            color: #28a745;
+        }
+
+        .converted-amount {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dc3545;
+        }
+
+        .success {
+            color: #155724;
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #28a745;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state::before {
+            content: "📦";
+            font-size: 4em;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input:invalid {
+            border-color: #dc3545;
+        }
+
+        .char-limit-warning {
+            color: #ffc107;
+        }
+
+        .char-limit-error {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛒 Purchase Application</h1>
+
+        <!-- API Key Section -->
+        <div class="section" style="background: #e3f2fd; border-left: 4px solid #2196f3;">
+            <h2 style="color: #1976d2;">🔑 API Key Configuration</h2>
+            <div class="form-group" style="display: flex; gap: 10px; align-items: flex-end;">
+                <div style="flex: 1;">
+                    <label for="apiKeyInput">API Key:</label>
+                    <input type="text" id="apiKeyInput" name="apiKey" placeholder="Enter your API key (e.g., wk_xxxxxxxxxxxxx)" style="font-family: 'Courier New', monospace;">
+                </div>
+                <button type="button" onclick="setApiKey()" style="margin-bottom: 0;">Set API Key</button>
+            </div>
+            <small id="apiKeyStatus" style="color: #666; font-size: 0.9em; display: block; margin-top: 5px;"></small>
+        </div>
+
+        <!-- Add Purchase Section -->
+        <div class="section">
+            <h2>Add New Purchase</h2>
+            <div id="message"></div>
+            <form id="purchaseForm">
+                <div class="form-group">
+                    <label for="date">Date:</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description:</label>
+                    <input type="text" id="description" name="description" placeholder="Enter item description" maxlength="50" required>
+                    <small id="descriptionCounter" style="color: #666; font-size: 0.9em; display: block; margin-top: 5px;">0/50 characters</small>
+                    <small id="descriptionError" style="color: #dc3545; font-size: 0.9em; display: none; margin-top: 5px;"></small>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Purchase Amount (USD):</label>
+                    <input type="number" id="amount" name="amount" step="0.01" min="0" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label for="country">Country:</label>
+                    <select id="country" name="country" required>
+                        <option value="">Loading countries...</option>
+                    </select>
+                </div>
+                <button type="submit">Add Purchase</button>
+            </form>
+        </div>
+
+        <!-- View Purchases Section -->
+        <div class="section">
+            <h2>View Purchases</h2>
+            <div class="currency-selector">
+                <label for="currencySelect" style="margin: 0; min-width: 150px;">View in Currency:</label>
+                <select id="currencySelect">
+                    <option value="">Loading currencies...</option>
+                </select>
+                <button type="button" onclick="loadPurchases()">Refresh</button>
+            </div>
+            <div id="purchasesTable">
+                <div class="loading">Loading purchases...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/purchases';
+        const API_KEY_STORAGE_KEY = 'purchase_app_api_key';
+
+        // Load countries on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStoredApiKey();
+            setTodayDate();
+            setupDescriptionValidation();
+            
+            // Load countries and currencies first, then purchases
+            loadCountries().then(() => {
+                return loadCurrencies();
+            }).then(() => {
+                // Load purchases after currencies are loaded
+                loadPurchases();
+            }).catch(error => {
+                console.error('Error initializing page:', error);
+            });
+        });
+
+        // Load API key from sessionStorage on page load
+        function loadStoredApiKey() {
+            const storedKey = sessionStorage.getItem(API_KEY_STORAGE_KEY);
+            if (storedKey) {
+                document.getElementById('apiKeyInput').value = storedKey;
+                updateApiKeyStatus('API key loaded from session', true);
+            }
+        }
+
+        // Set API key and store in sessionStorage
+        function setApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (!apiKey) {
+                showMessage('Please enter an API key', 'error');
+                return;
+            }
+            
+            sessionStorage.setItem(API_KEY_STORAGE_KEY, apiKey);
+            updateApiKeyStatus('API key saved to session', true);
+            showMessage('API key saved successfully!', 'success');
+            
+            // Reload data with new API key
+            loadCountries();
+            loadCurrencies();
+            loadPurchases();
+        }
+
+        // Update API key status display
+        function updateApiKeyStatus(message, isSet) {
+            const statusEl = document.getElementById('apiKeyStatus');
+            statusEl.textContent = message;
+            statusEl.style.color = isSet ? '#28a745' : '#666';
+        }
+
+        // Get API key from sessionStorage
+        function getApiKey() {
+            return sessionStorage.getItem(API_KEY_STORAGE_KEY);
+        }
+
+        // Helper function to add API key to fetch options
+        function addApiKeyToOptions(options) {
+            const apiKey = getApiKey();
+            if (apiKey) {
+                if (!options.headers) {
+                    options.headers = {};
+                }
+                options.headers['X-API-Key'] = apiKey;
+            }
+            return options;
+        }
+
+        function setupDescriptionValidation() {
+            const descriptionInput = document.getElementById('description');
+            const counter = document.getElementById('descriptionCounter');
+            const errorMsg = document.getElementById('descriptionError');
+            
+            descriptionInput.addEventListener('input', function() {
+                const length = this.value.length;
+                counter.textContent = `${length}/50 characters`;
+                
+                if (length > 50) {
+                    counter.className = 'char-limit-error';
+                    errorMsg.textContent = 'Description must be 50 characters or less';
+                    errorMsg.style.display = 'block';
+                } else if (length > 45) {
+                    counter.className = 'char-limit-warning';
+                    errorMsg.style.display = 'none';
+                } else {
+                    counter.className = '';
+                    errorMsg.style.display = 'none';
+                }
+            });
+        }
+
+        function setTodayDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+        }
+
+        async function loadCountries() {
+            try {
+                const options = addApiKeyToOptions({});
+                const response = await fetch(`${API_BASE}/countries`, options);
+                
+                if (response.status === 401) {
+                    const error = await response.json();
+                    showMessage('Error: ' + (error.error || 'Authentication required. Please set your API key.'), 'error');
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load countries');
+                }
+                
+                const countries = await response.json();
+                const countrySelect = document.getElementById('country');
+                
+                // Sort countries alphabetically by country name
+                countries.sort((a, b) => {
+                    if (a.country < b.country) return -1;
+                    if (a.country > b.country) return 1;
+                    return 0;
+                });
+                
+                countrySelect.innerHTML = '<option value="">Select a country</option>';
+                let defaultSelected = false;
+                
+                countries.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country.country;
+                    option.textContent = `${country.country} (${country.currencyCode})`;
+                    
+                    // Set United States as default
+                    if (country.country === 'United States' && !defaultSelected) {
+                        option.selected = true;
+                        defaultSelected = true;
+                    }
+                    
+                    countrySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading countries:', error);
+                showMessage('Error loading countries', 'error');
+            }
+        }
+
+        async function loadCurrencies() {
+            try {
+                const options = addApiKeyToOptions({});
+                const response = await fetch(`${API_BASE}/countries`, options);
+                
+                if (response.status === 401) {
+                    const error = await response.json();
+                    showMessage('Error: ' + (error.error || 'Authentication required. Please set your API key.'), 'error');
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load currencies');
+                }
+                
+                const countries = await response.json();
+                const currencySelect = document.getElementById('currencySelect');
+                
+                // Extract unique currencies and sort alphabetically
+                const currencies = [...new Set(countries.map(c => c.currencyCode))];
+                currencies.sort();
+                
+                currencySelect.innerHTML = '';
+                let defaultSelected = false;
+                
+                currencies.forEach(currencyCode => {
+                    const option = document.createElement('option');
+                    option.value = currencyCode;
+                    
+                    // Find the country name for display
+                    const country = countries.find(c => c.currencyCode === currencyCode);
+                    const displayName = country ? `${country.country} - ${currencyCode}` : currencyCode;
+                    option.textContent = displayName;
+                    
+                    // Set United States-Dollar as default
+                    if (currencyCode === 'United States-Dollar' && !defaultSelected) {
+                        option.selected = true;
+                        defaultSelected = true;
+                    }
+                    
+                    currencySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading currencies:', error);
+                // Fallback to basic list
+                const currencySelect = document.getElementById('currencySelect');
+                currencySelect.innerHTML = '<option value="United States-Dollar">United States-Dollar</option>';
+            }
+        }
+
+        async function loadPurchases() {
+            const currencySelect = document.getElementById('currencySelect');
+            const selectedCurrency = currencySelect.value;
+            const tableDiv = document.getElementById('purchasesTable');
+            
+            if (!selectedCurrency) {
+                tableDiv.innerHTML = '<div class="error">Please select a currency first.</div>';
+                return;
+            }
+            
+            try {
+                tableDiv.innerHTML = '<div class="loading">Loading purchases...</div>';
+                const options = addApiKeyToOptions({});
+                const response = await fetch(`${API_BASE}/converted?currency=${encodeURIComponent(selectedCurrency)}`, options);
+                
+                if (response.status === 401) {
+                    const error = await response.json();
+                    tableDiv.innerHTML = `<div class="error">${error.error || 'Authentication required. Please set your API key above.'}</div>`;
+                    return;
+                }
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Failed to load purchases');
+                }
+                
+                const purchases = await response.json();
+                
+                if (purchases.length === 0) {
+                    tableDiv.innerHTML = '<div class="empty-state">No purchases found. Add your first purchase above!</div>';
+                    return;
+                }
+
+                // Get currency display name
+                const currencyDisplayName = selectedCurrency.split('-').pop() || selectedCurrency;
+
+                let tableHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Country</th>
+                                <th>Original Amount (USD)</th>
+                                <th>Converted Amount (${currencyDisplayName})</th>
+                                <th>Exchange Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                purchases.forEach(purchase => {
+                    const date = new Date(purchase.date).toLocaleDateString();
+                    const convertedAmount = purchase.convertedAmount != null ? formatCurrency(purchase.convertedAmount, selectedCurrency) : '<span style="color: #dc3545;">N/A</span>';
+                    const exchangeRate = purchase.exchangeRate != null ? parseFloat(purchase.exchangeRate).toFixed(4) : '<span style="color: #dc3545;">N/A</span>';
+                    
+                    tableHTML += `
+                        <tr>
+                            <td>${purchase.id}</td>
+                            <td>${date}</td>
+                            <td>${purchase.description}</td>
+                            <td>${purchase.country}</td>
+                            <td class="amount">$${parseFloat(purchase.purchaseAmount).toFixed(2)}</td>
+                            <td class="converted-amount">${convertedAmount}</td>
+                            <td>${exchangeRate}</td>
+                        </tr>
+                    `;
+                });
+
+                tableHTML += `
+                        </tbody>
+                    </table>
+                `;
+
+                tableDiv.innerHTML = tableHTML;
+            } catch (error) {
+                console.error('Error loading purchases:', error);
+                tableDiv.innerHTML = `<div class="error">Error loading purchases: ${error.message || 'Please try again.'}</div>`;
+            }
+        }
+
+        function formatCurrency(amount, currency) {
+            if (amount == null || isNaN(amount)) {
+                return 'N/A';
+            }
+            
+            // Handle country_currency_desc format (e.g., "United States-Dollar", "Switzerland-Franc")
+            const currencyUpper = currency.toUpperCase();
+            
+            // Extract currency code from country_currency_desc format
+            let currencyCode = currency;
+            if (currency.includes('-')) {
+                const parts = currency.split('-');
+                currencyCode = parts[parts.length - 1].toUpperCase();
+            }
+            
+            const symbols = {
+                'DOLLAR': '$',
+                'EUR': '€',
+                'EURO': '€',
+                'POUND': '£',
+                'YEN': '¥',
+                'FRANC': 'CHF ',
+                'YUAN': '¥',
+                'RUPEE': '₹',
+                'PESO': 'MX$',
+                'REAL': 'R$'
+            };
+            
+            // Try to find symbol by currency code or currency name
+            let symbol = symbols[currencyCode] || symbols[currencyUpper];
+            
+            // If not found, try to extract from country_currency_desc
+            if (!symbol && currency.includes('-')) {
+                const currencyName = currency.split('-').pop().toUpperCase();
+                symbol = symbols[currencyName] || '$'; // Default to $ if not found
+            } else if (!symbol) {
+                symbol = currency + ' '; // Use currency code as fallback
+            }
+            
+            return symbol + parseFloat(amount).toFixed(2);
+        }
+
+        document.getElementById('purchaseForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const purchaseData = {
+                date: document.getElementById('date').value,
+                description: document.getElementById('description').value,
+                purchaseAmount: parseFloat(document.getElementById('amount').value),
+                country: document.getElementById('country').value
+            };
+
+            try {
+                const options = addApiKeyToOptions({
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(purchaseData)
+                });
+                
+                const response = await fetch(API_BASE, options);
+                
+                if (response.status === 401) {
+                    const error = await response.json();
+                    showMessage('Error: ' + (error.error || 'Authentication required. Please set your API key above.'), 'error');
+                    return;
+                }
+
+                if (response.ok) {
+                    const purchase = await response.json();
+                    showMessage('Purchase added successfully!', 'success');
+                    document.getElementById('purchaseForm').reset();
+                    setTodayDate();
+                    loadPurchases();
+                    // Reset description counter
+                    document.getElementById('descriptionCounter').textContent = '0/50 characters';
+                    document.getElementById('descriptionCounter').className = '';
+                    document.getElementById('descriptionError').style.display = 'none';
+                } else {
+                    const errorData = await response.json();
+                    let errorMessage = 'Failed to add purchase';
+                    
+                    // Handle validation errors
+                    if (errorData.description) {
+                        errorMessage = errorData.description;
+                        document.getElementById('descriptionError').textContent = errorData.description;
+                        document.getElementById('descriptionError').style.display = 'block';
+                    } else if (errorData.message) {
+                        errorMessage = errorData.message;
+                    }
+                    
+                    showMessage('Error: ' + errorMessage, 'error');
+                }
+            } catch (error) {
+                console.error('Error adding purchase:', error);
+                showMessage('Error adding purchase. Please try again.', 'error');
+            }
+        });
+
+        document.getElementById('currencySelect').addEventListener('change', function() {
+            loadPurchases();
+        });
+
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
+
